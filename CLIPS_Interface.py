@@ -19,6 +19,7 @@ def read_clips():
     except OSError:
         pass
 
+write_clips('(clear)')
 write_clips('(load basic_solver.clp)')
 write_clips('(watch rules)')
 write_clips('(watch facts)')
