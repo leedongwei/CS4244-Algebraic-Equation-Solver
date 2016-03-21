@@ -1,12 +1,12 @@
-
-; op operand1 operand 2 == normal syntax
 ; add 2 a = 2 + a
 ; subl 2 a = a - 2
 ; subr 2 a = 2 - a
 
-; Testing for number: (numberp <expression>) --> TRUE/FALSE
-(defrule operand1-is-a-number
-    ?old-fact <- (equation ?rhs equal ?operator ?level ?operand1&:(numberp ?operand1) split ?level $?operand2)
+; Inversion rule 1: RHS is a number, 1st operand on LHS is a number
+; num1 [operator] F(x) = rhs_num 
+; --> F(x) = rhs_num [inverse_operator] num1
+(defrule inversion_rule_1
+    ?old-fact <- (equation ?operator ?level ?operand1&:(numberp ?operand1) split ?level $?operand2 equal ?rhs&:(numberp ?rhs))
     =>
     (retract ?old-fact)
     (switch ?operator
@@ -22,6 +22,14 @@
         )(default (printout t "new operator!" crlf))
     )
 )
+
+; Inversion rule 2: RHS is a number, 2nd operand on LHS is a number
+; F(x) [operator] num2 = rhs_num 
+; --> F(x) = rhs_num [inverse_operator] num2
+
+
+; Inversion rule 3: If there are x on RHS, move them to LHS
+; F(x) = G(x) --> F(x) - G(x) = 0
 
 (defrule final
     ?x <- (equation ?rhs equal x)
