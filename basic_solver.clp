@@ -6,7 +6,7 @@
 ; num1 [operator] F(x) = rhs_num 
 ; --> F(x) = rhs_num [inverse_operator] num1
 (defrule inversion_rule_1
-    ?old-fact <- (equation ?operator ?level ?operand1&:(numberp ?operand1) split ?level $?operand2 equal ?rhs&:(numberp ?rhs))
+    ?old-fact <- (equation ?rhs&:(numberp ?rhs) equal ?operator ?level ?operand1&:(numberp ?operand1) split ?level $?operand2 )
     =>
     (retract ?old-fact)
     (switch ?operator
@@ -27,9 +27,44 @@
 ; F(x) [operator] num2 = rhs_num 
 ; --> F(x) = rhs_num [inverse_operator] num2
 
-
 ; Inversion rule 3: If there are x on RHS, move them to LHS
 ; F(x) = G(x) --> F(x) - G(x) = 0
+
+; Number Evaluation Rule: 
+; If there is a operation with both number operand, evaluate and replace the operation as a number
+; old_fact = ($?begin num1 operator num2 $?end) 
+; if num3 = num1 + num2 --> retract old_fact, assert ($?begin num3 $?end)
+
+; Association Rule
+; transforms (ax (+-) b) (+-) cx ==>  (a (+-) c) * x + b
+(defrule association-rules-add-sub
+    ?old-fact <- (equation ?rhs equal $?first ?operator1 ?id ?operator2 ?id2 mult ?id3 ?coef1 split ?id3 x split ?id2 ?operand2&:(numberp ?operand1) split ?id3 mult ?id4 ?coef2 split ?id4 x $?last)
+    =>
+    (retract ?old-fact)
+    (assert (equation ?rhs equal $?first ?operator2 ?id mult ?id2 ((eval ?operator1) ?coef1 ?coef2) split ?id2 x split ?id ?operand2 $?last))
+)
+
+; transforms (b (+-) ax) (+-) cx ==> ( ( (+-)a ) * x + b ) (+-) c * x
+(defrule association-rules-add-sub-2
+    ?old-fact <- (equation ?rhs equal $?first ?operator1 ?id ?operator2 ?id2 ?operand1&:(numberp ?operand1) split ?id2 mult ?id3 ?coef1 split ?id3 x split ?id3 mult ?id4 ?coef2 split ?id4 x $?last)
+    =>
+    (retract ?old-fact)
+    (switch ?operator
+        (case add then 
+            (assert (equation ?rhs equal $?first ?operator1 ?id add ?id2 mult ?id4 ?coef1 split ?id4 x split ?id2 ?operand1 split ?id3 mult ?id4 ?coef2 split ?id4 x $?last))
+        )(case sub then 
+            (assert (equation ?rhs equal $?first ?operator1 ?id add ?id2 mult ?id4 (- 0 ?coef1) split ?id4 x split ?id2 ?operand1 split ?id3 mult ?id4 ?coef2 split ?id4 x $?last))
+        )(default (printout t "new operator!" crlf))
+    )
+)
+
+(defrule association-rules
+    ?old-fact <- (equation ?rhs equal $?first ?operator ?id ?operator2 ?id2 ?operand1&:(str-index "x" ?operand1) split ?id2 ?operand2&:(numberp ?operand1) split ?id ?operator2 ?id3 ?operand3&:(str-index "x" ?operand3) split ?id3 ?operand4&:(numberp ?operand1) $?last)
+    =>
+    (retract ?old-fact)
+    (assert (equation ?rhs equal $?first add ?id ?operator1 ?id2 ?operand1 split ?id2 ?operand3 split ?id ?operator3 ?id3 ((eval ?operator2) 0 ?operand2) split ?id3 ?operand4 $?last))
+
+)
 
 (defrule final
     ?x <- (equation ?rhs equal x)
