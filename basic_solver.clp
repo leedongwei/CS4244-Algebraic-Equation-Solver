@@ -71,6 +71,25 @@
 
 
 ;;;;;
+; transforms (ax 2(+-) b) 1(+-) c ==>  ax + ((+-)b 1(+-) c)
+;;;;;
+
+(defrule association-rules-add-sub
+    ?old-fact <- (equation ?rhs equal $?first ?operator1 ?id ?operator2 ?id2 mult ?id3 ?coef1 split ?id3 x split ?id2 ?operand2&:(numberp ?operand2) split ?id ?c $?last)
+    =>
+    (retract ?old-fact)
+    (switch ?operator2
+        (case add then 
+            (assert (equation ?rhs equal $?first add ?id mult ?id2 ?coef1 split ?id2 x split ?id ?operator1 ?id3 ?b split ?id3 ?c $?last)))
+        (case sub then 
+            (assert (equation ?rhs equal $?first add ?id mult ?id2 ?coef1 split ?id2 x split ?id ?operator1 ?id3 (- 0 ?b) split ?id3 ?c $?last)))
+    )
+
+)
+
+
+
+;;;;;
 ; transforms (ax 2(+-) b) 1(+-) (cx 3(+-) d) ==> (a 1(+-) c)x 2(+-) b 1(+-) 3(+-) d
 ;;;;;
 
