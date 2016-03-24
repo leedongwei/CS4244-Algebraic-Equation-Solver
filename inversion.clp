@@ -35,7 +35,8 @@
 ; Make sure X is always on LHS
 ; F(x) = G(x) --> F(x) - G(x) = 0
 (defrule inversion_rule_3_make_sure_x_on_lhs
-    ?old-fact <- (equation $?lhs equal $?rhs&:($member x ?rhs))
+    ?old-fact <- (equation $?lhs equal $?rhs)
+    (test (member$ x ?rhs))
     =>
     (retract ?old-fact)
     (assert (equation sub ?*next_id* ?lhs split ?*next_id* ?rhs equal 0))
@@ -47,7 +48,7 @@
 ; old_fact = ($?begin num1 operator num2 $?end) 
 ; if num3 = num1 + num2 --> retract old_fact, assert ($?begin num3 $?end)
 (defrule num_eval_rule
-    ?old-fact <- (equation $?begin ?operator ?op_id ?num1&:(numberp ?num1)) split ?op_id ?num2&:(numberp ?num2) $?end)
+    ?old-fact <- (equation $?begin ?operator ?op_id ?num1&:(numberp ?num1) split ?op_id ?num2&:(numberp ?num2) $?end)
     =>
     (retract ?old-fact)
     (switch ?operator
