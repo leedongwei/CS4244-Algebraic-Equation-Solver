@@ -1,13 +1,13 @@
-
-; op operand1 operand 2 == normal syntax
 ; add 2 a = 2 + a
 ; subl 2 a = a - 2
 ; subr 2 a = 2 - a
 ; mul 2 3 = 2 * 3
 
-; Testing for number: (numberp <expression>) --> TRUE/FALSE
-(defrule operand1-is-a-number
-    ?old-fact <- (equation ?rhs equal ?operator ?id ?operand1&:(numberp ?operand1) split ?id $?operand2)
+; Inversion rule 1: RHS is a number, 1st operand on LHS is a number
+; num1 [operator] F(x) = rhs_num 
+; --> F(x) = rhs_num [inverse_operator] num1
+(defrule inversion_rule_1
+    ?old-fact <- (equation ?rhs&:(numberp ?rhs) equal ?operator ?level ?operand1&:(numberp ?operand1) split ?level $?operand2 )
     =>
     (retract ?old-fact)
     (switch ?operator
@@ -24,6 +24,7 @@
     )
 )
 
+<<<<<<< HEAD
 ;;;;;
 ;;;;;
 ;;;;; 
@@ -56,7 +57,65 @@
 ; transforms (ax 2(+-) b) 1(+-) cx ==>  (a 1(+-) c) * x 2(+-) b
 ;;;;;
 
-(defrule association-rules-add-sub
+=======
+; Inversion rule 2: RHS is a number, 2nd operand on LHS is a number
+; F(x) [operator] num2 = rhs_num 
+; --> F(x) = rhs_num [inverse_operator] num2
+(defrule inversion_rule_2
+    ?old-fact <- (equation ?rhs&:(numberp ?rhs) equal ?operator ?level $?operand1 split ?level ?operand2&:(numberp ?operand2))
+    => 
+    (retract ?old-fact)
+    (switch ?operator
+        (case add then 
+            (assert (equation (- ?rhs ?operand2) equal ?operand1))
+            (printout t crlf ?rhs " = " ?operand2 " + " ?operand1 crlf)
+        )(case subl then 
+            (assert (equation (+ ?rhs ?operand2) equal ?operand1))
+            (printout t crlf ?rhs " = " ?operand1 " - " ?operand2 crlf)
+        )(case subr then 
+            (assert (equation (- ?operand2 ?rhs) equal ?operand1))
+            (printout t crlf ?rhs " = " ?operand2 " - " ?operand1 crlf)
+        )(default (printout t "new operator!" crlf))
+    )
+)
+
+; Inversion rule 3: If there are x on RHS, move them to LHS
+; F(x) = G(x) --> F(x) - G(x) = 0
+(defrule inversion_rule_3
+    ?old-fact <- (equation ?rhs equal ?operator ?level ?operand1&:(numberp ?operand1) split ?level $?operand2)
+    =>
+    (retract ?old-fact)
+    (switch ?operator
+        (case add then 
+            (assert (equation (- ?operand2 ?rhs) equal (- 0 ?operand1)))
+            (printout t crlf ?rhs " = " ?operand1 " + " ?operand2 crlf)
+        )(case subl then 
+            (assert (equation (- ?rhs ?operand2) equal ?operand1))
+            (printout t crlf ?rhs " = " ?operand1 " - " ?operand2 crlf)
+        )(case subr then 
+            (assert (equation (- ?operand2 ?rhs) equal (- 0 ?operand1)))
+            (printout t crlf ?rhs " = " ?operand1 " - " ?operand2 crlf)
+        )(default (printout t "new operator!" crlf))
+    )
+)
+
+; Number Evaluation Rule: 
+; If there is a operation with both number operand, evaluate and replace the operation as a number
+; old_fact = ($?begin num1 operator num2 $?end) 
+; if num3 = num1 + num2 --> retract old_fact, assert ($?begin num3 $?end)
+(defrule num_eval_rule
+    ?old-fact <- (equation ?rhs equal ?operator ?level ?operand1&:(numberp ?operand1) split ?level $?operand2 )
+    (test (and (numberp ?operand1) (numberp ?operand2)))
+    =>
+    (retract ?old-fact)
+    (assert (equation ?rhs equal (+ ?operand1 ?operand2)))
+)
+
+
+; Association Rule
+; transforms (ax (+-) b) (+-) cx ==>  (a (+-) c) * x + b
+>>>>>>> 2e36d68e6f6bdb3b8e3ebb7318bd4cac3aa1be85
+(defrule association-rules-add-sub1
     ?old-fact <- (equation ?rhs equal $?first ?operator1 ?id ?operator2 ?id2 mult ?id3 ?coef1 split ?id3 x split ?id2 ?operand2&:(numberp ?operand1) split ?id mult ?id4 ?coef2 split ?id4 x $?last)
     =>
     (retract ?old-fact)
@@ -75,7 +134,7 @@
 ; transforms (ax 2(+-) b) 1(+-) c ==>  ax + (2(+-)b 1(+-) c)
 ;;;;;
 
-(defrule association-rules-add-sub
+(defrule association-rules-add-sub2
     ?old-fact <- (equation ?rhs equal $?first ?operator1 ?id ?operator2 ?id2 mult ?id3 ?coef1 split ?id3 x split ?id2 ?b&:(numberp ?b) split ?id ?c $?last)
     =>
     (retract ?old-fact)
@@ -85,7 +144,6 @@
         (case sub then 
             (assert (equation ?rhs equal $?first add ?id mult ?id2 ?coef1 split ?id2 x split ?id ?operator1 ?id3 (- 0 ?b) split ?id3 ?c $?last)))
     )
-
 )
 
 
