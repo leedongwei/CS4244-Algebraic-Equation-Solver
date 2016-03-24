@@ -3,6 +3,7 @@
 ; add 2 a = 2 + a
 ; subl 2 a = a - 2
 ; subr 2 a = 2 - a
+; mul 2 3 = 2 * 3
 
 ; Testing for number: (numberp <expression>) --> TRUE/FALSE
 (defrule operand1-is-a-number
@@ -43,9 +44,9 @@
     (retract ?old-fact)
     (switch ?operator1
         (case add then 
-            (equation ?rhs equal $?first add ?id mult ?id2 ?coef split ?id2 x $?last split ?id ?operand1&:(numberp ?operand1)))
+            (equation ?rhs equal $?first add ?id mult ?id2 ?coef split ?id2 x $?last split ?id ?operand1 $?last))
         (case sub then 
-            (equation ?rhs equal $?first add ?id mult ?id2 (- 0 ?coef) split ?id2 x $?last split ?id ?operand1&:(numberp ?operand1)))
+            (equation ?rhs equal $?first add ?id mult ?id2 (- 0 ?coef) split ?id2 x split ?id ?operand1 $?last))
     )
 )
 
@@ -71,11 +72,11 @@
 
 
 ;;;;;
-; transforms (ax 2(+-) b) 1(+-) c ==>  ax + ((+-)b 1(+-) c)
+; transforms (ax 2(+-) b) 1(+-) c ==>  ax + (2(+-)b 1(+-) c)
 ;;;;;
 
 (defrule association-rules-add-sub
-    ?old-fact <- (equation ?rhs equal $?first ?operator1 ?id ?operator2 ?id2 mult ?id3 ?coef1 split ?id3 x split ?id2 ?operand2&:(numberp ?operand2) split ?id ?c $?last)
+    ?old-fact <- (equation ?rhs equal $?first ?operator1 ?id ?operator2 ?id2 mult ?id3 ?coef1 split ?id3 x split ?id2 ?b&:(numberp ?b) split ?id ?c $?last)
     =>
     (retract ?old-fact)
     (switch ?operator2
