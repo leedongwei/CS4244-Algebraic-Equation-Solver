@@ -1,25 +1,20 @@
-; add 2 a = 2 + a
-; subl 2 a = a - 2
-; subr 2 a = 2 - a
+; add a b = a + b
+; sub a b = a - b
 
 ; Inversion rule 1: RHS is a number, 1st operand on LHS is a number
 ; num1 [operator] F(x) = rhs_num 
 ; --> F(x) = rhs_num [inverse_operator] num1
 (defrule inversion_rule_1
-    ?old-fact <- (equation ?rhs&:(numberp ?rhs) equal ?operator ?level ?operand1&:(numberp ?operand1) split ?level $?operand2 )
+    ?old-fact <- (equation ?operator ?op_id ?num1&:(numberp ?num1) split ?op_id $?F_x equal ?rhs_num&:(numberp ?rhs_num) )
     =>
     (retract ?old-fact)
     (switch ?operator
         (case add then 
-            (assert (equation (- ?rhs ?operand1) equal ?operand2))
-            (printout t crlf ?rhs " = " ?operand1 " + " ?operand2 crlf)
-        )(case subl then 
-            (assert (equation (+ ?rhs ?operand1) equal ?operand2))
-            (printout t crlf ?rhs " = " ?operand2 " - " ?operand1 crlf)
-        )(case subr then 
-            (assert (equation (- ?operand1 ?rhs) equal ?operand2))
-            (printout t crlf ?rhs " = " ?operand1 " - " ?operand2 crlf)
-        )(default (printout t "new operator!" crlf))
+            (assert (equation ?F_x equal (- ?rhs_num ?num1)))
+        )(case sub then 
+            (assert (equation ?F_x equal (- ?num1 ?rhs_num)))
+        )
+        (default (printout t "[WARNING] operator not exist!" crlf))
     )
 )
 
@@ -27,41 +22,27 @@
 ; F(x) [operator] num2 = rhs_num 
 ; --> F(x) = rhs_num [inverse_operator] num2
 (defrule inversion_rule_2
-    ?old-fact <- (equation ?rhs&:(numberp ?rhs) equal ?operator ?level $?operand1 split ?level ?operand2&:(numberp ?operand2))
-    => 
-    (retract ?old-fact)
-    (switch ?operator
-        (case add then 
-            (assert (equation (- ?rhs ?operand2) equal ?operand1))
-            (printout t crlf ?rhs " = " ?operand2 " + " ?operand1 crlf)
-        )(case subl then 
-            (assert (equation (+ ?rhs ?operand2) equal ?operand1))
-            (printout t crlf ?rhs " = " ?operand1 " - " ?operand2 crlf)
-        )(case subr then 
-            (assert (equation (- ?operand2 ?rhs) equal ?operand1))
-            (printout t crlf ?rhs " = " ?operand2 " - " ?operand1 crlf)
-        )(default (printout t "new operator!" crlf))
-    )
-)
-
-; Inversion rule 3: If there are x on RHS, move them to LHS
-; F(x) = G(x) --> F(x) - G(x) = 0
-(defrule inversion_rule_3
-    ?old-fact <- (equation ?rhs equal ?operator ?level ?operand1&:(numberp ?operand1) split ?level $?operand2)
+    ?old-fact <- (equation ?operator ?op_id $?F_x split ?op_id ?num2&:(numberp ?num2) equal ?rhs_num&:(numberp ?rhs_num) )
     =>
     (retract ?old-fact)
     (switch ?operator
         (case add then 
-            (assert (equation (- ?operand2 ?rhs) equal (- 0 ?operand1)))
-            (printout t crlf ?rhs " = " ?operand1 " + " ?operand2 crlf)
-        )(case subl then 
-            (assert (equation (- ?rhs ?operand2) equal ?operand1))
-            (printout t crlf ?rhs " = " ?operand1 " - " ?operand2 crlf)
-        )(case subr then 
-            (assert (equation (- ?operand2 ?rhs) equal (- 0 ?operand1)))
-            (printout t crlf ?rhs " = " ?operand1 " - " ?operand2 crlf)
-        )(default (printout t "new operator!" crlf))
+            (assert (equation ?F_x equal (- ?rhs_num ?num2)))
+        )(case sub then 
+            (assert (equation ?F_x equal (+ ?rhs_num ?num2)))
+        )
+        (default (printout t "[WARNING] operator not exist!" crlf))
     )
+)
+
+; Make sure X is always on LHS
+; F(x) = G(x) --> F(x) - G(x) = 0
+(defrule inversion_rule_3_make_sure_x_on_lhs
+    ?old-fact <- (equation $?lhs equal $?rhs&:($member x ?rhs))
+    =>
+    (retract ?old-fact)
+    (assert (equation sub ?*next_id* ?lhs split ?*next_id* ?rhs equal 0))
+    (bind ?*next_id* (+ ?*next_id* 1))
 )
 
 ; Number Evaluation Rule: 
@@ -69,11 +50,19 @@
 ; old_fact = ($?begin num1 operator num2 $?end) 
 ; if num3 = num1 + num2 --> retract old_fact, assert ($?begin num3 $?end)
 (defrule num_eval_rule
-    ?old-fact <- (equation ?rhs equal ?operator ?level ?operand1&:(numberp ?operand1) split ?level $?operand2 )
-    (test (and (numberp ?operand1) (numberp ?operand2)))
+    ?old-fact <- (equation $?begin ?operator ?op_id ?num1&:(numberp ?num1)) split ?op_id ?num2&:(numberp ?num2) $?end)
     =>
     (retract ?old-fact)
-    (assert (equation ?rhs equal (+ ?operand1 ?operand2)))
+    (switch ?operator
+        (case add then 
+            (assert (equation $?begin (+ ?num1 ?num2) $?end))
+        )(case sub then 
+            (assert (equation $?begin (- ?num1 ?num2) $?end))
+        )
+        (default 
+            (printout t "new operator!" crlf)
+        )
+    )
 )
 
 
@@ -118,3 +107,5 @@
 (deffacts init-fact
     (equation 2 equal add 1 4 split 1 subl 2 3 split 2 x)
 )
+(defglobal ?*next_id* = 100)
+
