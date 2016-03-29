@@ -53,15 +53,26 @@ write_clips('(watch facts)')
 write_clips('(reset)')
 write_clips('(run)')
 
+
 #READ OUTPUT
+log = ''
 try:
   while True:
     out = read_clips()
     if out:
-      print out.replace('CLIPS> ',''),
+      out = out.replace('CLIPS> ','')
+      print out,
+      log+= out
     sleep(0.1)
 except KeyboardInterrupt:
   print 'KeyboardInterrupt, exit clips'
   write_clips('(exit)')
   p.terminate()
   Popen.terminate
+
+for s in log.splitlines():
+  if s.find('==>')!=-1 and s.find('equation')!=-1:
+    eq_str = s[s.find('equation')+9:-1]
+    print eq_str
+
+    
