@@ -58,7 +58,7 @@ try:
   while True:
     out = read_clips()
     if out:
-      print out
+      print out.replace('CLIPS> ',''),
     sleep(0.1)
 except KeyboardInterrupt:
   print 'KeyboardInterrupt, exit clips'
