@@ -56,7 +56,12 @@
 ; old_fact = ($?begin num1 operator num2 $?end) 
 ; if num3 = num1 + num2 --> retract old_fact, assert ($?begin num3 $?end)
 (defrule num_eval_rule
-    ?old-fact <- (equation $?begin ?operator ?op_id ?num1&:(numberp ?num1) split ?op_id ?num2&:(numberp ?num2) end ?op_id $?end)
+    ?old-fact <- (equation 
+        $?begin 
+            ?operator ?op_id ?num1&:(numberp ?num1) 
+                split ?op_id ?num2&:(numberp ?num2)
+            end ?op_id 
+        $?end)
     =>
     (retract ?old-fact)
     (switch ?operator
