@@ -2,7 +2,7 @@
 ; num1 [operator] F(x) = rhs_num 
 ; --> F(x) = rhs_num [inverse_operator] num1
 (defrule inversion_rule_1
-    ?old-fact <- (equation ?operator ?op_id ?num1&:(numberp ?num1) split ?op_id $?F_x equal ?rhs_num&:(numberp ?rhs_num) )
+    ?old-fact <- (equation ?operator ?op_id ?num1&:(numberp ?num1) split ?op_id $?F_x end ?op_id equal ?rhs_num&:(numberp ?rhs_num))
     =>
     (retract ?old-fact)
     (switch ?operator
@@ -10,6 +10,10 @@
             (assert (equation ?F_x equal (- ?rhs_num ?num1)))
         )(case sub then 
             (assert (equation ?F_x equal (- ?num1 ?rhs_num)))
+        )(case mult then
+            (assert (equation ?F_x equal (/ ?rhs_num ?num1)))
+        )(case div then
+            (assert (equation ?F_x equal (/ ?num1 ?rhs_num)))
         )
         (default (printout t "[WARNING] operator not exist!" crlf))
     )
@@ -19,7 +23,7 @@
 ; F(x) [operator] num2 = rhs_num 
 ; --> F(x) = rhs_num [inverse_operator] num2
 (defrule inversion_rule_2
-    ?old-fact <- (equation ?operator ?op_id $?F_x split ?op_id ?num2&:(numberp ?num2) equal ?rhs_num&:(numberp ?rhs_num) )
+    ?old-fact <- (equation ?operator ?op_id $?F_x split ?op_id ?num2&:(numberp ?num2) end ?op_id equal ?rhs_num&:(numberp ?rhs_num) )
     =>
     (retract ?old-fact)
     (switch ?operator
@@ -27,6 +31,10 @@
             (assert (equation ?F_x equal (- ?rhs_num ?num2)))
         )(case sub then 
             (assert (equation ?F_x equal (+ ?rhs_num ?num2)))
+        )(case mult then
+            (assert (equation ?F_x equal (/ ?rhs_num ?num2)))
+        )(case div then
+            (assert (equation ?F_x equal (* ?rhs_num ?num2)))
         )
         (default (printout t "[WARNING] operator not exist!" crlf))
     )
@@ -39,7 +47,7 @@
     (test (member$ x ?rhs))
     =>
     (retract ?old-fact)
-    (assert (equation sub ?*next_id* ?lhs split ?*next_id* ?rhs equal 0))
+    (assert (equation sub ?*next_id* ?lhs split ?*next_id* ?rhs end ?*next_id* equal 0))
     (bind ?*next_id* (+ ?*next_id* 1))
 )
 
@@ -48,7 +56,7 @@
 ; old_fact = ($?begin num1 operator num2 $?end) 
 ; if num3 = num1 + num2 --> retract old_fact, assert ($?begin num3 $?end)
 (defrule num_eval_rule
-    ?old-fact <- (equation $?begin ?operator ?op_id ?num1&:(numberp ?num1) split ?op_id ?num2&:(numberp ?num2) $?end)
+    ?old-fact <- (equation $?begin ?operator ?op_id ?num1&:(numberp ?num1) split ?op_id ?num2&:(numberp ?num2) end ?op_id $?end)
     =>
     (retract ?old-fact)
     (switch ?operator
@@ -56,6 +64,10 @@
             (assert (equation $?begin (+ ?num1 ?num2) $?end))
         )(case sub then 
             (assert (equation $?begin (- ?num1 ?num2) $?end))
+        )(case mult then 
+            (assert (equation $?begin (* ?num1 ?num2) $?end))
+        )(case div then 
+            (assert (equation $?begin (/ ?num1 ?num2) $?end))
         )
         (default 
             (printout t "new operator!" crlf)
