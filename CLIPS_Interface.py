@@ -12,40 +12,52 @@ import re
 
 ## Strings to guide users
 promptClear = (
-  '\r\n'
-  '******************************'
-  '******************************'
-  '\r\n'
+    '\r\n'
+    '******************************'
+    '******************************'
+    '\r\n'
 )
 promptHelp = (
-  'AVAILABLE COMMANDS:\r\n'
-  'help: Display this help screen \r\n'
-  'exit: Close CLIPS \r\n\r\n'
+    'AVAILABLE COMMANDS:\r\n'
+    'help: Display this help screen \r\n'
+    'exit: Close CLIPS \r\n\r\n'
 
-  'Please use exit to quit this program to ensure that CLIPS\r\n'
-  'does not continue to in the background and consume resources\r\n'
+    'Please use exit to quit this program to ensure that CLIPS\r\n'
+    'does not continue to in the background and consume resources\r\n'
 )
 promptInput = 'CLIPS> '
 promptInputError = (
-  'ERROR: Does not recognize command or wrong syntax for equation\r\n'
+    'ERROR: Does not recognize command or wrong syntax for equation\r\n'
 )
 operators = {
-  # addition
-  '+' : {
-    'prec' : 1,
-    'calc' : lambda a,b: a + b },
-  # subtraction
-  '-' : {
-    'prec' : 1,
-    'calc' : lambda a,b: a - b },
-  # multiplication
-  '*' : {
-    'prec' : 2,
-    'calc' : lambda a,b: a * b },
-  # division
-  '/' : {
-    'prec' : 2,
-    'calc' : lambda a,b: a / b },
+    '(' : {
+        'id'   : '(',
+        'prec' : 0,
+        'calc' : lambda a,b: a / b },
+    ')' : {
+        'id'   : ')',
+        'prec' : 0,
+        'calc' : lambda a,b: a / b },
+    # addition
+    '+' : {
+        'id'   : '+',
+        'prec' : 1,
+        'calc' : lambda a,b: a + b },
+    # subtraction
+    '-' : {
+        'id'   : '-',
+        'prec' : 1,
+        'calc' : lambda a,b: a - b },
+   # multiplication
+    '*' : {
+        'id'   : '*',
+        'prec' : 2,
+        'calc' : lambda a,b: a * b },
+    # division
+    '/' : {
+        'id'   : '/',
+        'prec' : 2,
+        'calc' : lambda a,b: a / b },
 }
 
 
@@ -54,20 +66,20 @@ operators = {
 ## Load CLIPS based on Operating System
 p = None
 if platform.system() == 'Darwin':
-  print '\r\nLoading CLIPS for Mac OS X...'
+    print '\r\nLoading CLIPS for Mac OS X...'
 
-  from fcntl import fcntl, F_GETFL, F_SETFL
-  from os import O_NONBLOCK
-  exec_dir = path.dirname(path.realpath(__file__))
-  exec_path = path.join(exec_dir,'CLIPS_console_mac')
+    from fcntl import fcntl, F_GETFL, F_SETFL
+    from os import O_NONBLOCK
+    exec_dir = path.dirname(path.realpath(__file__))
+    exec_path = path.join(exec_dir,'CLIPS_console_mac')
 
-  p = Popen('CLIPS_console_mac',
-            shell=False,
-            stdin=PIPE,
-            stdout=PIPE,
-            stderr= PIPE)
-  flags = fcntl(p.stdout, F_GETFL) # get current p.stdout flags
-  fcntl(p.stdout, F_SETFL, flags | O_NONBLOCK)
+    p = Popen('CLIPS_console_mac',
+              shell=False,
+              stdin=PIPE,
+              stdout=PIPE,
+              stderr= PIPE)
+    flags = fcntl(p.stdout, F_GETFL) # get current p.stdout flags
+    fcntl(p.stdout, F_SETFL, flags | O_NONBLOCK)
 
 elif platform.system() == 'Windows':
     print '\r\nLoading CLIPS for Windows...'
@@ -87,6 +99,7 @@ print promptHelp
 
 
 
+
 class ClipsConverter:
     def __init__(self, inp):
         self.input = inp
@@ -94,44 +107,49 @@ class ClipsConverter:
 
     def parse(self):
         self.operatorStack = []
+        self.variableStack = []
         self.postfixString = []
-        tokens = list(self.input.replace(' ', ''))
-
+        tokens = self.input.replace(' ', '')
+        tokens = [x for x in re.split('([+-/*\(\)])', tokens) if x != '']
         while tokens:
             self.parse_token(tokens.pop(0))
-
-        print '---'
-        print self.operatorStack
-        print self.postfixString
-        print '---'
-
         while self.operatorStack:
             self.postfixString.append(self.operatorStack.pop())
 
     def parse_token (self, tok):
         if is_number(tok):
-           self.postfixString.append(tok)
-
+            self.postfixString.append(tok)
+        elif 'x' in tok:
+            self.postfixString.append(tok)
         elif self.operators.has_key(tok):
             actual_tok = self.operators[tok]
             self.parse_op(actual_tok)
-
-        elif tok == 'a':
-            print 'equal'
-
         else:
+            print ("ERROR: ", tok)
             raise SyntaxError('Unrecognized token ' + str(tok));
 
     def parse_op (self, tok):
         def weaker (left, right):
-            if left.assoc == 'left' and left.prec == right.prec:
-                return True
-            return left.prec < right.prec
+            return left['prec'] < right['prec']
 
-        while self.operatorStack and weaker(tok, self.operatorStack[-1]):
-            self.postfixString.append(self.operatorStack.pop())
+        if tok['id'] == '(':
+            self.operatorStack.append(tok)
+        elif tok['id'] == ')':
+            while self.operatorStack :
+                prevTok = self.operatorStack.pop()
+                if prevTok == '(':
+                  break
+                else:
+                  self.postfixString.append(prevTok)
+        elif (not self.operatorStack) or self.operatorStack[-1] == '(':
+            self.operatorStack.append(tok)
+        else:
+            while self.operatorStack and weaker(tok, self.operatorStack[-1]):
+                temp = self.operatorStack.pop()
+                self.postfixString.append(temp)
 
-        self.operatorStack.append(tok)
+            self.operatorStack.append(tok)
+
 
 
 
@@ -163,13 +181,16 @@ def convert_input(s):
           return 'error'
 
         LHS = ClipsConverter(temp[0])
-        RHS = temp[1]
+        RHS = ClipsConverter(temp[1])
 
         LHS.parse()
+        RHS.parse()
 
 
-        print LHS.input
-        print LHS.operators
+        # TODO: DongWei
+        print ' --- POSTFIXSTRING ---'
+        print LHS.postfixString
+        print RHS.postfixString
         # print LHS.operatorStack
         # print LHS.postfixString
 
