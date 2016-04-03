@@ -2,11 +2,6 @@
 ; sub a b = a - b
 ; mul a b = a * b
 
-; To be updated by equation parser
-(defglobal ?*next_id* = 100)
-
-(load inversion.clp)
-
 ;;;;;
 ;;;;;
 ;;;;; 
@@ -132,18 +127,4 @@
     (retract ?old-fact)
     (assert (equation ?rhs equal $?first add ?id ?operator1 ?id2 ?operand1 split ?id2 ?operand3 split ?id ?operator3 ?id3 ((eval ?operator2) 0 ?operand2) split ?id3 ?operand4 $?last))
 
-)
-
-
-
-;;--------------------------------------------------------------------------------
-(defrule final
-    ?x <- (equation ?rhs equal x)
-    =>
-    (printout t crlf "x = " ?rhs crlf)
-    
-)
-
-(deffacts init-fact
-    (equation 2 equal add 1 4 split 1 subl 2 3 split 2 x)
 )
