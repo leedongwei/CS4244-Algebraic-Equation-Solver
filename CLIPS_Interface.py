@@ -73,7 +73,7 @@ if platform.system() == 'Darwin':
     exec_dir = path.dirname(path.realpath(__file__))
     exec_path = path.join(exec_dir,'CLIPS_console_mac')
 
-    p = Popen('CLIPS_console_mac',
+    p = Popen(exec_path,
               shell=False,
               stdin=PIPE,
               stdout=PIPE,
