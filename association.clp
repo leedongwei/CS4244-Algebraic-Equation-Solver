@@ -212,3 +212,79 @@
     ; a * (x * b) => (a*b) * x
     (assert (equation $?first div ?id (* ?a ?b) split ?id x end ?id $?last))
 )
+
+;; (a/x)/b == (a/b)/x
+(defrule association-rules-div2
+    ?old-fact <- (equation $?first
+        div ?id
+            div ?id2 
+                ?b&:(numberp ?b)
+            split ?id2 
+                x
+            end ?id2
+        split ?id
+            ?a&:(numberp ?a)
+        end ?id
+    $?last)
+    =>
+    (retract ?old-fact)
+    ; a * (x * b) => (a*b) * x
+    (assert (equation $?first div ?id (/ ?a ?b) split ?id x end ?id $?last))
+)
+
+;; (x/a)/b == x/(a*b)
+(defrule association-rules-div2
+    ?old-fact <- (equation $?first
+        div ?id
+            div ?id2 
+                x
+            split ?id2 
+                ?a&:(numberp ?a)
+            end ?id2
+        split ?id
+            ?b&:(numberp ?b)
+        end ?id
+    $?last)
+    =>
+    (retract ?old-fact)
+    ; a * (x * b) => (a*b) * x
+    (assert (equation $?first div ?id x split ?id (* ?a ?b) end ?id $?last))
+)
+
+;; (x/a)*b == x/(a/b)
+(defrule association-rules-div2
+    ?old-fact <- (equation $?first
+        mult ?id
+            div ?id2 
+                x
+            split ?id2 
+                ?a&:(numberp ?a)
+            end ?id2
+        split ?id
+            ?b&:(numberp ?b)
+        end ?id
+    $?last)
+    =>
+    (retract ?old-fact)
+    ; a * (x * b) => (a*b) * x
+    (assert (equation $?first div ?id x split ?id (/ ?a ?b) end ?id $?last))
+)
+
+;; (x op a)/b == x/b op a/b
+(defrule association-rules-div2
+    ?old-fact <- (equation $?first
+        div ?id
+            add ?id2 
+                x
+            split ?id2 
+                ?a&:(numberp ?a)
+            end ?id2
+        split ?id
+            ?b&:(numberp ?b)
+        end ?id
+    $?last)
+    =>
+    (retract ?old-fact)
+    ; a * (x * b) => (a*b) * x
+    (assert (equation $?first add ?id div ?id2 x split ?id2 b end ?id2 split ?id (/ ?a ?b) end ?id $?last))
+)
