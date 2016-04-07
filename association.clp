@@ -233,7 +233,7 @@
 )
 
 ;; (x/a)/b == x/(a*b)
-(defrule association-rules-div2
+(defrule association-rules-div3
     ?old-fact <- (equation $?first
         div ?id
             div ?id2 
@@ -252,7 +252,7 @@
 )
 
 ;; (x/a)*b == x/(a/b)
-(defrule association-rules-div2
+(defrule association-rules-div4
     ?old-fact <- (equation $?first
         mult ?id
             div ?id2 
@@ -271,7 +271,7 @@
 )
 
 ;; (x op a)/b == x/b op a/b
-(defrule association-rules-div2
+(defrule association-rules-div5
     ?old-fact <- (equation $?first
         div ?id
             add ?id2 
