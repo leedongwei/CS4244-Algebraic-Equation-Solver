@@ -33,31 +33,36 @@ operators = {
     '(' : {
         'id'   : '(',
         'prec' : 0,
-        'calc' : lambda a,b: a / b },
+        'calc' : '' },
     ')' : {
         'id'   : ')',
         'prec' : 0,
-        'calc' : lambda a,b: a / b },
+        'calc' : '' },
     # addition
     '+' : {
         'id'   : '+',
         'prec' : 1,
-        'calc' : lambda a,b: a + b },
+        'calc' : 'add' },
     # subtraction
     '-' : {
         'id'   : '-',
         'prec' : 1,
-        'calc' : lambda a,b: a - b },
+        'calc' : 'sub' },
    # multiplication
     '*' : {
         'id'   : '*',
         'prec' : 2,
-        'calc' : lambda a,b: a * b },
+        'calc' : 'mult' },
     # division
     '/' : {
         'id'   : '/',
         'prec' : 2,
-        'calc' : lambda a,b: a / b },
+        'calc' : 'div' },
+    '=' : {
+        'id'   : '=',
+        'prec' : 5,
+        'calc' : 'equal'
+    }
 }
 
 
@@ -102,31 +107,53 @@ print promptHelp
 
 class ClipsConverter:
     def __init__(self, inp):
-        self.input = inp
+        self.input = inp.replace(' ', '')
         self.operators = operators
-
-    def parse(self):
         self.operatorStack = []
         self.variableStack = []
-        self.postfixString = []
-        tokens = self.input.replace(' ', '')
-        tokens = [x for x in re.split('([+-/*\(\)])', tokens) if x != '']
-        while tokens:
-            self.parse_token(tokens.pop(0))
-        while self.operatorStack:
-            self.postfixString.append(self.operatorStack.pop())
+        self.shuntedTokens = []
+        self.maxDepth = 1
+        self.output = ''
+
+    def parse(self):
+        ## Converts "5x" to "(5*x)"
+        operand = re.compile(r'(\d+)x')
+        self.input = operand.sub(r'(\1*x)', self.input)
+
+        LHS_RHS = self.input.split('=')
+        LHS_RHS_out = []
+
+        for side in LHS_RHS:
+            self.operatorStack = []
+            self.variableStack = []
+            self.shuntedTokens = []
+            tokens = [x for x in re.split('([+-/*\(\)=])', side) if x != '']
+
+            ## Shunting-yard Algorithm
+            while tokens:
+                self.parse_token(tokens.pop(0))
+            while self.operatorStack:
+                self.shuntedTokens.append(self.operatorStack.pop())
+
+            ## Convert into CLIPS program syntax
+            convert = self.build_CLIPS_eqn(self.shuntedTokens.pop())
+            LHS_RHS_out.append(convert)
+
+        print 'LHS: ' + LHS_RHS_out[0]
+        print 'RHS: ' + LHS_RHS_out[1]
+        self.output = ' equal '.join(LHS_RHS_out)
+
 
     def parse_token (self, tok):
-        if is_number(tok):
-            self.postfixString.append(tok)
-        elif 'x' in tok:
-            self.postfixString.append(tok)
+        if is_number(tok) or 'x' in tok:
+            self.shuntedTokens.append(tok)
         elif self.operators.has_key(tok):
             actual_tok = self.operators[tok]
             self.parse_op(actual_tok)
         else:
             print ("ERROR: ", tok)
             raise SyntaxError('Unrecognized token ' + str(tok));
+
 
     def parse_op (self, tok):
         def weaker (left, right):
@@ -137,18 +164,54 @@ class ClipsConverter:
         elif tok['id'] == ')':
             while self.operatorStack :
                 prevTok = self.operatorStack.pop()
-                if prevTok == '(':
-                  break
+                if prevTok['id'] == '(':
+                    break
                 else:
-                  self.postfixString.append(prevTok)
+                    self.shuntedTokens.append(prevTok)
         elif (not self.operatorStack) or self.operatorStack[-1] == '(':
             self.operatorStack.append(tok)
         else:
             while self.operatorStack and weaker(tok, self.operatorStack[-1]):
                 temp = self.operatorStack.pop()
-                self.postfixString.append(temp)
+                self.shuntedTokens.append(temp)
 
             self.operatorStack.append(tok)
+
+
+    def build_CLIPS_eqn(self, tok, depth=-1):
+        if depth < 0:
+            depth = self.maxDepth
+
+        if is_number(tok) or 'x' in tok:
+            if self.maxDepth < depth:
+                self.maxDepth = depth
+            return str(tok)
+
+        if not isinstance(tok['calc'], str):
+            return None
+        else:
+            rightOperand = self.build_CLIPS_eqn(
+                                self.shuntedTokens.pop(), depth+1)
+            leftOperand = self.build_CLIPS_eqn(
+                                self.shuntedTokens.pop(), depth+1)
+            depth = str(depth)
+
+            output = []
+            # output.append("(")
+            output.append(tok['calc'])
+            output.append(depth)
+            output.append(leftOperand)
+            output.append('split')
+            output.append(depth)
+            output.append(rightOperand)
+            output.append('end')
+            output.append(depth)
+            # output.append(")")
+
+            return  ' '.join(output)
+
+
+
 
 
 
@@ -175,38 +238,33 @@ def close_clips():
 
 def convert_input(s):
 
-    if s.find('=>') != -1:
-        temp = s.split('=>')
+    if s.find('=') != -1:
+        temp = s.split('=')
         if len(temp) > 2:
           return 'error'
 
-        LHS = ClipsConverter(temp[0])
-        RHS = ClipsConverter(temp[1])
+        eqn = ClipsConverter(s)
+        eqn.parse()
 
-        LHS.parse()
-        RHS.parse()
+        converted = '(equation ' + eqn.output + ')'
+
+        print '\nEQN: ' + converted
+        return converted
 
 
-        # TODO: DongWei
-        print ' --- POSTFIXSTRING ---'
-        print LHS.postfixString
-        print RHS.postfixString
-        # print LHS.operatorStack
-        # print LHS.postfixString
-
-    # user is  using CLIPS syntax
+    # user is using CLIPS syntax
     elif s.find('equation') != -1:
-        print 'equation'
+        return s
 
     return 'error'
 
     # return '(equation ?rhs equal $?first ?operator1 ?id ?operand1&:(numberp ?operand1) split ?id mult ?id2 ?coef split ?id2 x $?last)'
 
-def is_number (string):
+def is_number (token):
     try:
-        float(string)
+        float(token)
         return True
-    except ValueError:
+    except:
         return False
 
 
