@@ -189,3 +189,26 @@
     ; a * (x * b) => (a*b) * x
     (assert (equation $?first mult ?id (* ?a ?b) split ?id x end ?id $?last))
 )
+
+
+
+
+;; Association for division
+;; a/(x/b) == (a*b)/x
+(defrule association-rules-div1
+    ?old-fact <- (equation $?first
+        div ?id
+            ?a&:(numberp ?a)
+        split ?id
+            div ?id2 
+                x
+            split ?id2 
+                ?b&:(numberp ?b)
+            end ?id2
+        end ?id
+    $?last)
+    =>
+    (retract ?old-fact)
+    ; a * (x * b) => (a*b) * x
+    (assert (equation $?first div ?id (* ?a ?b) split ?id x end ?id $?last))
+)
