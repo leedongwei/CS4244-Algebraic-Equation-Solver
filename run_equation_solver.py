@@ -4,75 +4,98 @@ import platform
 from subprocess import Popen, PIPE
 from time import sleep
 import sys
+import re
+from interpreter import *
 
+## Load CLIPS based on Operating System
 p = None
 if platform.system() == 'Darwin':
-  print '\r\n Loading CLIPS for Mac OS X...'
-  
-  from fcntl import fcntl, F_GETFL, F_SETFL
-  from os import O_NONBLOCK
-  exec_dir = path.dirname(path.realpath(__file__))
-  exec_path = path.join(exec_dir,'CLIPS_console_mac')
-  p = Popen(exec_path, shell=False, stdin=PIPE, stdout=PIPE, stderr= PIPE)
-  flags = fcntl(p.stdout, F_GETFL) # get current p.stdout flags
-  fcntl(p.stdout, F_SETFL, flags | O_NONBLOCK)
+    print '\r\nLoading CLIPS for Mac OS X...'
+
+    from fcntl import fcntl, F_GETFL, F_SETFL
+    from os import O_NONBLOCK
+    exec_dir = path.dirname(path.realpath(__file__))
+    exec_path = path.join(exec_dir,'CLIPS_console_mac')
+
+    p = Popen(exec_path,
+              shell=False,
+              stdin=PIPE,
+              stdout=PIPE,
+              stderr= PIPE)
+    flags = fcntl(p.stdout, F_GETFL) # get current p.stdout flags
+    fcntl(p.stdout, F_SETFL, flags | O_NONBLOCK)
 
 elif platform.system() == 'Windows':
-  print '\r\n Loading CLIPS for Windows...'
-  p = Popen('CLIPS_console_windows.exe',
-            shell=False, stdin=PIPE, stdout=PIPE, stderr= PIPE)
-else:
-  print '\r\n OS not supported'
-  sys.exit()
-print '\r\n\r\n************************************************************\r\n'
+    print '\r\nLoading CLIPS for Windows...'
+    p = Popen('CLIPS_console_windows.exe',
+              shell=False,
+              stdin=PIPE,
+              stdout=PIPE,
+              stderr= PIPE)
+else :
+    print '\r\nOS not supported'
+    exit()
+
 
 def write_clips(cmd):
-  global p
-  p.stdin.write(cmd+'\n')
+    global p
+    p.stdin.write(cmd+'\n')
 
 def read_clips():
-  global p
-  try:
-    s = read(p.stdout.fileno(),1024)
-    return s
-  except OSError:
-    return None
+    global p
+    try:
+        s = read(p.stdout.fileno(), 99999)
+        return s
+    except OSError:
+        return None
 
-# response = raw_input("Enter Equation: (eg. 3 = 2x + 1)\r\n ")
-
-#LOAD CLIPS
-read_clips()
-write_clips('(clear)')
-write_clips('(load init.clp)')
-write_clips('(load inversion.clp)')
-write_clips('(load association.clp)')
-write_clips('(watch rules)')
-write_clips('(watch facts)')
-# write_clips('(unwatch rules)')
-# write_clips('(unwatch facts)')
-write_clips('(reset)')
-write_clips('(run)')
+def close_clips():
+    write_clips('(exit)')
+    p.terminate()
+    Popen.terminate
+    print 'Close CLIPS and exit'
+    sys.exit()
 
 
-#READ OUTPUT
-log = ''
-try:
-  while True:
-    out = read_clips()
-    if out:
-      out = out.replace('CLIPS> ','')
-      print out,
-      log+= out
-    sleep(0.1)
-except KeyboardInterrupt:
-  print 'KeyboardInterrupt, exit clips'
-  write_clips('(exit)')
-  p.terminate()
-  Popen.terminate
+equation = "(4+5x)+(x*8)*16=2"
+eqn = ClipsConverter(equation)
+eqn.parse()
 
-for s in log.splitlines():
-  if s.find('==>')!=-1 and s.find('equation')!=-1:
-    eq_str = s[s.find('equation')+9:-1]
-    print eq_str
+if eqn.output != 'error':
+    write_clips('(clear)')
+    write_clips('(load init.clp)')
+    write_clips('(deffacts initial_equation (equation %s))'%eqn.output)
+    write_clips('(defglobal ?*next_id* = %s)'%(eqn.nextOperatorId))
+    write_clips('(load inversion.clp)')
+    write_clips('(load first_order_solver.clp)')
+    write_clips('(watch rules)')
+    write_clips('(watch facts)')
+    write_clips('(reset)')
+    write_clips('(run)')
+    sleep(0.2)
 
+    print eqn.output
     
+    # try: 
+    #     while True:
+    #         tmp = read_clips()
+    #         if tmp!=None:
+    #             print tmp,
+    #         sleep(0.1)
+    # except Exception,e:
+    #     print e
+    #     close_clips()
+
+    s = ''
+    tmp = read_clips()
+    try:
+        while tmp!=None and s[:-7]!='CLIPS> ':
+            s += tmp
+            sleep(0.1)
+            tmp = read_clips()
+        print s.replace("CLIPS> ","")
+    except KeyboardInterrupt:
+        close_clips()
+
+else:
+    print "Please check equation syntax"
