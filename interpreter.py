@@ -50,7 +50,7 @@ class ClipsConverter:
         self.operatorStack = []
         self.variableStack = []
         self.shuntedTokens = []
-        self.maxDepth = 1
+        self.nextOperatorId = 1
         self.output = ''
 
     def parse(self):
@@ -77,8 +77,8 @@ class ClipsConverter:
             convert = self.build_CLIPS_eqn(self.shuntedTokens.pop())
             LHS_RHS_out.append(convert)
 
-        print 'LHS: ' + LHS_RHS_out[0]
-        print 'RHS: ' + LHS_RHS_out[1]
+        # print 'LHS: ' + LHS_RHS_out[0]
+        # print 'RHS: ' + LHS_RHS_out[1]
         self.output = ' equal '.join(LHS_RHS_out)
 
 
@@ -127,11 +127,10 @@ class ClipsConverter:
                                 self.shuntedTokens.pop())
             leftOperand = self.build_CLIPS_eqn(
                                 self.shuntedTokens.pop())
-            depth = str(self.maxDepth)
-            self.maxDepth += 1
+            depth = str(self.nextOperatorId)
+            self.nextOperatorId += 1
 
             output = []
-            # output.append("(")
             output.append(tok['calc'])
             output.append(depth)
             output.append(leftOperand)
@@ -140,10 +139,11 @@ class ClipsConverter:
             output.append(rightOperand)
             output.append('end')
             output.append(depth)
-            # output.append(")")
 
             return  ' '.join(output)
 
-# eqn =  ClipsConverter('(4 + 5* x) + (x * 8) * 16 = 2')
-# eqn.parse()
-# print eqn.output
+#sample usecase
+eqn =  ClipsConverter('(4 + 5* x) + (x * 8) * 16 = 2')
+eqn.parse()
+print eqn.output
+print eqn.nextOperatorId

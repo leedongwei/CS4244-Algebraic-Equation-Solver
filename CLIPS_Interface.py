@@ -24,7 +24,7 @@ promptHelp = (
     'Please use exit to quit this program to ensure that CLIPS\r\n'
     'does not continue to in the background and consume resources\r\n'
 )
-promptInput = 'CLIPS> '
+promptInput = 'Solve> '
 promptInputError = (
     'ERROR: Does not recognize command or wrong syntax for equation\r\n'
 )
@@ -163,34 +163,30 @@ try:
             print promptHelp
             continue
 
-        elif userInput.find('solve')==0:
-            eqn = ClipsConverter(userInput[6:])
-            eqn.parse()
-            if eqn.output == 'error':
-                print 'Please check equation syntax'
-                continue
-
+        eqn = ClipsConverter(userInput)
+        eqn.parse()
+        if eqn.output != 'error':
             write_clips('(clear)')
             write_clips('(load init.clp)')
             write_clips('(deffacts initial_equation (equation %s))'%eqn.output)
-            write_clips('(defglobal ?*next_id* = %s)'%(eqn.maxDepth+1))
+            write_clips('(defglobal ?*next_id* = %s)'%(eqn.nextOperatorId))
             write_clips('(load inversion.clp)')
             write_clips('(load association.clp)')
             write_clips('(watch rules)')
             write_clips('(watch facts)')
             write_clips('(reset)')
             write_clips('(run)')
-
-
-            sleep(0.2)
+            
             s = ''
-            s+= read_clips() 
-            while read_clips()!=None:
-                s += read_clips()
-                sleep(0.2)
-            print s
+            tmp = read_clips()
+            while tmp!=None:
+                s += tmp
+                sleep(0.1)
+                tmp = read_clips()
+            print s.replace("CLIPS> ","")
         else:
             print promptInputError
+            
 
 except KeyboardInterrupt:
     print 'KeyboardInterrupt, exit clips'
