@@ -5,9 +5,7 @@ from subprocess import Popen, PIPE
 from time import sleep
 import sys
 import re
-
-
-
+from interpreter import *
 
 
 ## Strings to guide users
@@ -19,6 +17,7 @@ promptClear = (
 )
 promptHelp = (
     'AVAILABLE COMMANDS:\r\n'
+    'solve: Solve equation. Example: solve 3*x-6=0'
     'help: Display this help screen \r\n'
     'exit: Close CLIPS \r\n\r\n'
 
@@ -65,9 +64,6 @@ operators = {
     }
 }
 
-
-
-
 ## Load CLIPS based on Operating System
 p = None
 if platform.system() == 'Darwin':
@@ -93,128 +89,12 @@ elif platform.system() == 'Windows':
               stdin=PIPE,
               stdout=PIPE,
               stderr= PIPE)
-
 else :
     print '\r\nOS not supported'
     exit()
 
 print promptClear
 print promptHelp
-
-
-
-
-
-class ClipsConverter:
-    def __init__(self, inp):
-        self.input = inp.replace(' ', '')
-        self.operators = operators
-        self.operatorStack = []
-        self.variableStack = []
-        self.shuntedTokens = []
-        self.maxDepth = 1
-        self.output = ''
-
-    def parse(self):
-        ## Converts "5x" to "(5*x)"
-        operand = re.compile(r'(\d+)x')
-        self.input = operand.sub(r'(\1*x)', self.input)
-
-        LHS_RHS = self.input.split('=')
-        LHS_RHS_out = []
-
-        for side in LHS_RHS:
-            self.operatorStack = []
-            self.variableStack = []
-            self.shuntedTokens = []
-            tokens = [x for x in re.split('([+-/*\(\)=])', side) if x != '']
-
-            ## Shunting-yard Algorithm
-            while tokens:
-                self.parse_token(tokens.pop(0))
-            while self.operatorStack:
-                self.shuntedTokens.append(self.operatorStack.pop())
-
-            ## Convert into CLIPS program syntax
-            convert = self.build_CLIPS_eqn(self.shuntedTokens.pop())
-            LHS_RHS_out.append(convert)
-
-        print 'LHS: ' + LHS_RHS_out[0]
-        print 'RHS: ' + LHS_RHS_out[1]
-        self.output = ' equal '.join(LHS_RHS_out)
-
-
-    def parse_token (self, tok):
-        if is_number(tok) or 'x' in tok:
-            self.shuntedTokens.append(tok)
-        elif self.operators.has_key(tok):
-            actual_tok = self.operators[tok]
-            self.parse_op(actual_tok)
-        else:
-            print ("ERROR: ", tok)
-            raise SyntaxError('Unrecognized token ' + str(tok));
-
-
-    def parse_op (self, tok):
-        def weaker (left, right):
-            return left['prec'] < right['prec']
-
-        if tok['id'] == '(':
-            self.operatorStack.append(tok)
-        elif tok['id'] == ')':
-            while self.operatorStack :
-                prevTok = self.operatorStack.pop()
-                if prevTok['id'] == '(':
-                    break
-                else:
-                    self.shuntedTokens.append(prevTok)
-        elif (not self.operatorStack) or self.operatorStack[-1] == '(':
-            self.operatorStack.append(tok)
-        else:
-            while self.operatorStack and weaker(tok, self.operatorStack[-1]):
-                temp = self.operatorStack.pop()
-                self.shuntedTokens.append(temp)
-
-            self.operatorStack.append(tok)
-
-
-    def build_CLIPS_eqn(self, tok, depth=-1):
-        if depth < 0:
-            depth = self.maxDepth
-
-        if is_number(tok) or 'x' in tok:
-            if self.maxDepth < depth:
-                self.maxDepth = depth
-            return str(tok)
-
-        if not isinstance(tok['calc'], str):
-            return None
-        else:
-            rightOperand = self.build_CLIPS_eqn(
-                                self.shuntedTokens.pop(), depth+1)
-            leftOperand = self.build_CLIPS_eqn(
-                                self.shuntedTokens.pop(), depth+1)
-            depth = str(depth)
-
-            output = []
-            # output.append("(")
-            output.append(tok['calc'])
-            output.append(depth)
-            output.append(leftOperand)
-            output.append('split')
-            output.append(depth)
-            output.append(rightOperand)
-            output.append('end')
-            output.append(depth)
-            # output.append(")")
-
-            return  ' '.join(output)
-
-
-
-
-
-
 
 
 def write_clips(cmd):
@@ -237,7 +117,6 @@ def close_clips():
     sys.exit()
 
 def convert_input(s):
-
     if s.find('=') != -1:
         temp = s.split('=')
         if len(temp) > 2:
@@ -260,21 +139,12 @@ def convert_input(s):
 
     # return '(equation ?rhs equal $?first ?operator1 ?id ?operand1&:(numberp ?operand1) split ?id mult ?id2 ?coef split ?id2 x $?last)'
 
-def is_number (token):
-    try:
-        float(token)
-        return True
-    except:
-        return False
 
-
-
-
-write_clips('(clear)')
-write_clips('(load basic_solver.clp)')
-write_clips('(reset)')
-write_clips('(run)')
-read_clips()
+# write_clips('(clear)')
+# write_clips('(load basic_solver.clp)')
+# write_clips('(reset)')
+# write_clips('(run)')
+# read_clips()
 
 # write_clips('(watch rules)')
 # write_clips('(watch facts)')
@@ -293,12 +163,32 @@ try:
             print promptHelp
             continue
 
-        userInput = convert_input(userInput)
+        elif userInput.find('solve')==0:
+            eqn = ClipsConverter(userInput[6:])
+            eqn.parse()
+            if eqn.output == 'error':
+                print 'Please check equation syntax'
+                continue
 
-        if userInput != 'error':
-            write_clips(userInput)
+            write_clips('(clear)')
+            write_clips('(load init.clp)')
+            write_clips('(deffacts initial_equation (equation %s))'%eqn.output)
+            write_clips('(defglobal ?*next_id* = %s)'%(eqn.maxDepth+1))
+            write_clips('(load inversion.clp)')
+            write_clips('(load association.clp)')
+            write_clips('(watch rules)')
+            write_clips('(watch facts)')
+            write_clips('(reset)')
+            write_clips('(run)')
+
+
             sleep(0.2)
-            read_clips()
+            s = ''
+            s+= read_clips() 
+            while read_clips()!=None:
+                s += read_clips()
+                sleep(0.2)
+            print s
         else:
             print promptInputError
 
