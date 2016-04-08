@@ -15,6 +15,7 @@ if platform.system() == 'Darwin':
     from fcntl import fcntl, F_GETFL, F_SETFL
     from os import O_NONBLOCK
 
+    #For safety
     os.system('killall CLIPS_console_mac')
 
     exec_dir = path.dirname(path.realpath(__file__))
@@ -58,8 +59,18 @@ def close_clips():
     print 'Close CLIPS and exit'
     sys.exit()
 
+def print_progress(log):
+    for s in log.splitlines():
+        if s.find('FIRE')!=-1:
+            rule_used = s.split()[2]
+            print "Apply %s: "%rule_used,
+        if s.find('==>')!=-1 and s.find('equation')!=-1:
+            eq_str = s[s.find('equation')-1:]
+            print_equation(eq_str)
 
-equation = "(4+5x)+(x*8)*16=2"
+#Test case 1:
+# equation = "(4+5x)+(x*8)*16=2"
+equation = "(4+5x)+(x*8)+16=2"
 eqn = ClipsConverter(equation)
 eqn.parse()
 
@@ -76,26 +87,22 @@ if eqn.output != 'error':
     write_clips('(run)')
     sleep(0.2)
 
-    print eqn.output
-    
-    # try: 
-    #     while True:
-    #         tmp = read_clips()
-    #         if tmp!=None:
-    #             print tmp,
-    #         sleep(0.1)
-    # except Exception,e:
-    #     print e
-    #     close_clips()
+    print '(equation %s)'%eqn.output
 
-    s = ''
-    tmp = read_clips()
     try:
-        while tmp!=None and s[:-7]!='CLIPS> ':
-            s += tmp
-            sleep(0.1)
+        for wait_attempt in range(5):
+            s = ''
             tmp = read_clips()
-        print s.replace("CLIPS> ","")
+            while tmp!=None and s[:-7]!='CLIPS> ':
+                s += tmp
+                sleep(0.1)
+                tmp = read_clips()
+            if s!= '':
+                print s.replace("CLIPS> ","")
+                print_progress(s)
+            else:
+                print '....'
+            sleep(1)
     except KeyboardInterrupt:
         pass
 else:

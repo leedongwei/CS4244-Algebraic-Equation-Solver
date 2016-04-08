@@ -147,3 +147,42 @@ class ClipsConverter:
 # eqn.parse()
 # print eqn.output
 # print eqn.nextOperatorId
+
+CLIPS_operators = ['add','sub','mult','div']
+
+def print_func(lq):
+    x = lq.pop(0)
+    if x in CLIPS_operators:
+        x_id = lq.pop(0)
+        operand1 = []
+        operand2 = []    
+        while not (lq[0]=='split' and lq[1]==x_id):
+            operand1.append(lq.pop(0))
+        lq.pop(0)
+        lq.pop(0)
+        while not (lq[0]=='end' and lq[1]==x_id):
+            operand2.append(lq.pop(0))
+        lq.pop(0)
+        lq.pop(0)
+        
+        op = ''
+        if x=='add':
+            op = '+'
+        elif x=='sub':
+            op = '-'
+        elif x=='mult':
+            op = '*'
+        elif x=='div':
+            op = '/'
+        else:
+            op = '_%s_'%x
+        return "(%s%s%s)"%(print_func(operand1), op, print_func(operand2))
+    else:
+        return x
+    
+def print_equation(s):
+    s = s[10:-1]
+    l = s.split('equal')
+    LHS = l[0].split()
+    RHS = l[1].split()
+    print print_func(LHS),'=',print_func(RHS)

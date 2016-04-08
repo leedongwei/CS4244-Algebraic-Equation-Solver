@@ -1,7 +1,7 @@
 ; 1 Commutative_reorder_Fx
 ; 1a. B +- F[x]  => (+-1)*F[x] + B ; F[x] is anything has x
 ; 1b. F[x] */ B  => (1*/B) * F[x]
-; 1c. F[x] +- Bx => Bx +- F[x] ; F[x]=Ax+C
+; 1c. F[x] +- Bx => (0+-B)x + F[x]
 
 (defrule Commutative_reorder_Fx_1a
     ?old-fact <- (equation $?first
@@ -68,6 +68,48 @@
             )(case div then
                 ; F[x] / B = (1/B) * F[x] ; TODO: not calc div here, keep original format
                 (assert (equation ?first mult ?id (/ 1 ?num) split ?id ?F_x end ?id ?last))
+            )
+        )
+    )
+)
+
+(defrule Commutative_reorder_Fx_1c
+    ; 1c. F[x] +- Bx => Bx +- F[x]
+    ?old-fact <- (equation $?first 
+        ?operator ?id 
+            $?F_x&:(member$ x ?F_x)
+        split ?id
+            mult ?id2
+                ?num_B&:(numberp ?num_B)
+            split ?id2
+                x
+            end ?id2
+        end ?id
+    $?last)
+    (test (or 
+        (= (str-compare ?operator add) 0)
+        (= (str-compare ?operator sub) 0)
+    ))
+    =>
+    (retract ?old-fact)
+    (switch ?operator
+        (case add then 
+            ; 1c. F[x] + Bx => Bx + F[x]
+            (assert (equation ?first 
+                add ?id
+                    mult ?id2 ?num_B split ?id2 x end ?id2
+                split ?id 
+                    ?F_x
+                end ?id ?last)
+            )
+        )(case sub then
+            ; 1c. F[x] - Bx => -Bx + F[x]
+            (assert (equation ?first 
+                add ?id
+                    mult ?id2 (- 0 ?num_B) split ?id2 x end ?id2
+                split ?id 
+                    ?F_x
+                end ?id ?last)
             )
         )
     )
