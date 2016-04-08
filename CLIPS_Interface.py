@@ -141,7 +141,7 @@ try:
             write_clips('(watch facts)')
             write_clips('(reset)')
             write_clips('(run)')
-            
+
             print eqn.output
             s = ''
             tmp = read_clips()
@@ -157,6 +157,9 @@ try:
 except KeyboardInterrupt:
     print 'KeyboardInterrupt, exit clips'
     close_clips()
-
+except Exception,e:
+    print e
+    close_clips()
+    
 close_clips()
 
