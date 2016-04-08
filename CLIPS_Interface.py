@@ -16,15 +16,15 @@ promptClear = (
     '\r\n'
 )
 promptHelp = (
+    'Enter equation to solve (3x+4)+5x=1 \r\n'
     'AVAILABLE COMMANDS:\r\n'
-    'solve: Solve equation. Example: solve 3*x-6=0'
     'help: Display this help screen \r\n'
     'exit: Close CLIPS \r\n\r\n'
 
     'Please use exit to quit this program to ensure that CLIPS\r\n'
     'does not continue to in the background and consume resources\r\n'
 )
-promptInput = 'CLIPS> '
+promptInput = 'Solve> '
 promptInputError = (
     'ERROR: Does not recognize command or wrong syntax for equation\r\n'
 )
@@ -116,41 +116,6 @@ def close_clips():
     print 'Close CLIPS and exit'
     sys.exit()
 
-def convert_input(s):
-    if s.find('=') != -1:
-        temp = s.split('=')
-        if len(temp) > 2:
-          return 'error'
-
-        eqn = ClipsConverter(s)
-        eqn.parse()
-
-        converted = '(equation ' + eqn.output + ')'
-
-        print '\nEQN: ' + converted
-        return converted
-
-
-    # user is using CLIPS syntax
-    elif s.find('equation') != -1:
-        return s
-
-    return 'error'
-
-    # return '(equation ?rhs equal $?first ?operator1 ?id ?operand1&:(numberp ?operand1) split ?id mult ?id2 ?coef split ?id2 x $?last)'
-
-
-# write_clips('(clear)')
-# write_clips('(load basic_solver.clp)')
-# write_clips('(reset)')
-# write_clips('(run)')
-# read_clips()
-
-# write_clips('(watch rules)')
-# write_clips('(watch facts)')
-# write_clips('(unwatch rules)')
-# write_clips('(unwatch facts)')
-
 try:
     while True:
         userInput = raw_input(promptInput)
@@ -163,34 +128,31 @@ try:
             print promptHelp
             continue
 
-        elif userInput.find('solve')==0:
-            eqn = ClipsConverter(userInput[6:])
-            eqn.parse()
-            if eqn.output == 'error':
-                print 'Please check equation syntax'
-                continue
-
+        eqn = ClipsConverter(userInput)
+        eqn.parse()
+        if eqn.output != 'error':
             write_clips('(clear)')
             write_clips('(load init.clp)')
             write_clips('(deffacts initial_equation (equation %s))'%eqn.output)
-            write_clips('(defglobal ?*next_id* = %s)'%(eqn.maxDepth+1))
+            write_clips('(defglobal ?*next_id* = %s)'%(eqn.nextOperatorId))
             write_clips('(load inversion.clp)')
             write_clips('(load association.clp)')
             write_clips('(watch rules)')
             write_clips('(watch facts)')
             write_clips('(reset)')
             write_clips('(run)')
-
-
-            sleep(0.2)
+            
+            print eqn.output
             s = ''
-            s+= read_clips() 
-            while read_clips()!=None:
-                s += read_clips()
-                sleep(0.2)
-            print s
+            tmp = read_clips()
+            while tmp!=None:
+                s += tmp
+                sleep(0.1)
+                tmp = read_clips()
+            print s.replace("CLIPS> ","")
         else:
             print promptInputError
+            
 
 except KeyboardInterrupt:
     print 'KeyboardInterrupt, exit clips'
