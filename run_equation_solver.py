@@ -1,4 +1,4 @@
-# import os
+import os
 from os import read,path
 import platform
 from subprocess import Popen, PIPE
@@ -14,9 +14,11 @@ if platform.system() == 'Darwin':
 
     from fcntl import fcntl, F_GETFL, F_SETFL
     from os import O_NONBLOCK
+
+    os.system('killall CLIPS_console_mac')
+
     exec_dir = path.dirname(path.realpath(__file__))
     exec_path = path.join(exec_dir,'CLIPS_console_mac')
-
     p = Popen(exec_path,
               shell=False,
               stdin=PIPE,
@@ -95,7 +97,8 @@ if eqn.output != 'error':
             tmp = read_clips()
         print s.replace("CLIPS> ","")
     except KeyboardInterrupt:
-        close_clips()
-
+        pass
 else:
     print "Please check equation syntax"
+
+close_clips()
