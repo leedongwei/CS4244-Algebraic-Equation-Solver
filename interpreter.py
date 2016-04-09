@@ -176,13 +176,24 @@ def print_func(lq):
             op = '/'
         else:
             op = '_%s_'%x
-        return "(%s%s%s)"%(print_func(operand1), op, print_func(operand2))
+
+        x1 = print_func(operand1)
+        x2 = print_func(operand2)
+        if x2=='x' and op=='*' and is_number(x1):
+            return "%sx"%x1
+        else:
+            return "(%s%s%s)"%(x1,op,x2)
+        
     else:
         return x
     
 def print_equation(s):
     s = s[10:-1]
     l = s.split('equal')
-    LHS = l[0].split()
-    RHS = l[1].split()
-    print print_func(LHS),'=',print_func(RHS)
+    LHS = print_func(l[0].split())
+    RHS = print_func(l[1].split())
+    if LHS[0]=='(' and LHS[-1]==")":
+        LHS = LHS[1:-1]
+    if RHS[0]=='(' and RHS[-1]==")":
+        RHS = RHS[1:-1]
+    print LHS,'=',RHS
