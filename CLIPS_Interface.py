@@ -28,41 +28,7 @@ promptInput = 'Solve> '
 promptInputError = (
     'ERROR: Does not recognize command or wrong syntax for equation\r\n'
 )
-operators = {
-    '(' : {
-        'id'   : '(',
-        'prec' : 0,
-        'calc' : '' },
-    ')' : {
-        'id'   : ')',
-        'prec' : 0,
-        'calc' : '' },
-    # addition
-    '+' : {
-        'id'   : '+',
-        'prec' : 1,
-        'calc' : 'add' },
-    # subtraction
-    '-' : {
-        'id'   : '-',
-        'prec' : 1,
-        'calc' : 'sub' },
-   # multiplication
-    '*' : {
-        'id'   : '*',
-        'prec' : 2,
-        'calc' : 'mult' },
-    # division
-    '/' : {
-        'id'   : '/',
-        'prec' : 2,
-        'calc' : 'div' },
-    '=' : {
-        'id'   : '=',
-        'prec' : 5,
-        'calc' : 'equal'
-    }
-}
+
 
 ## Load CLIPS based on Operating System
 p = None
@@ -152,7 +118,7 @@ try:
             print s.replace("CLIPS> ","")
         else:
             print promptInputError
-            
+
 
 except KeyboardInterrupt:
     print 'KeyboardInterrupt, exit clips'
@@ -160,6 +126,6 @@ except KeyboardInterrupt:
 except Exception,e:
     print e
     close_clips()
-    
+
 close_clips()
 
