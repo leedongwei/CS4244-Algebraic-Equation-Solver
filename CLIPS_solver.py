@@ -20,7 +20,7 @@ class CLIPS_solver:
 
             #For safety
             system('killall CLIPS_console_mac')
-            
+
             exec_dir = path.dirname(path.realpath(__file__))
             exec_path = path.join(exec_dir,'CLIPS_console_mac')
             self.p = Popen(exec_path,
@@ -42,7 +42,7 @@ class CLIPS_solver:
             print '\r\nOS not supported'
             return False
         return True
-    
+
     def write_clips(self,cmd):
         self.p.stdin.write(cmd+'\n')
 
@@ -58,7 +58,7 @@ class CLIPS_solver:
         self.p.stdin.write('exit\n')
         self.p.terminate()
         Popen.terminate
-    
+
     def print_progress(self,log):
         print 'Equation:'
         for s in log.splitlines():
@@ -81,16 +81,16 @@ class CLIPS_solver:
             if s.find('FIRE')!=-1:
                 rule_used = s[s.find('FIRE'):].split()[2]
                 if rule_used!='final_result:':
-                    output += "Apply %s <br>"%rule_used
+                    output += "<div class='output-step'><div class='output-step-head'>Apply %s </div>"%rule_used
             if s.find('==>')!=-1 and s.find('equation')!=-1:
                 eq_str = s[s.find('equation')-1:]
-                output += "$$ %s $$ <br>"%interprete_equation(eq_str)
-        
+                output += "<div class='output-step-eqn'>$$ %s $$</div></div>"%interprete_equation(eq_str)
+
         if s.find('final_result')==-1:
             output += "FAILED TO SOLVE FOR X"
 
         return output
-        
+
     def solve(self,equation_str):
         eqn = ClipsConverter(equation_str)
         eqn.parse()
@@ -113,7 +113,7 @@ class CLIPS_solver:
                 while True:
                     tmp = self.read_clips()
                     if tmp!=None:
-                        s += tmp                
+                        s += tmp
                         if s.splitlines()[-1].rstrip()=='CLIPS>':
                             break
                     sleep(0.1)

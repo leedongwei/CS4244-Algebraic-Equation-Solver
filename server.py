@@ -18,7 +18,7 @@ def parse_data():
         return res
     else:
         return "FAILED TO SOLVE"
-    
+
 if __name__ == "__main__":
     try:
         app.run()

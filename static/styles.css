@@ -1,0 +1,7 @@
+.panel {
+  display: block;
+  height: auto;
+  width: 700px;
+  margin: 0 auto;
+  border: 1px solid #000;
+}
