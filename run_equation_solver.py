@@ -47,7 +47,7 @@ def write_clips(cmd):
 def read_clips():
     global p
     try:
-        s = read(p.stdout.fileno(), 99999)
+        s = read(p.stdout.fileno(), 2048)
         return s
     except OSError:
         return None
@@ -82,7 +82,6 @@ equation = "(4+5x)+2*(8x+x*16+2)=2"
 
 eqn = ClipsConverter(equation)
 eqn.parse()
-
 if eqn.output != 'error':
     write_clips('(clear)')
     write_clips('(load init.clp)')
@@ -97,21 +96,18 @@ if eqn.output != 'error':
     sleep(0.2)
 
     # print '(equation %s)'%eqn.output
-
     try:
-        for wait_attempt in range(1):
-            s = ''
+        s= ''
+        tmp = ''
+        while True:
             tmp = read_clips()
-            while tmp!=None and s[:-7]!='CLIPS> ':
-                s += tmp
-                sleep(0.1)
-                tmp = read_clips()
-            if s!= '':
-                print s.replace("CLIPS> ","")
-                print_progress(s)
-            else:
-                print '....'
-            sleep(1)
+            if tmp!=None:
+                s += tmp                
+                if s.splitlines()[-1].rstrip()=='CLIPS>':
+                    break
+            sleep(0.1)
+        print s.replace("CLIPS> ","")
+        print_progress(s)            
     except KeyboardInterrupt:
         pass
 else:
