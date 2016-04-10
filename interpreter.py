@@ -197,3 +197,14 @@ def print_equation(s):
     if RHS[0]=='(' and RHS[-1]==")":
         RHS = RHS[1:-1]
     print LHS,'=',RHS
+
+def interprete_equation(s):
+    s = s[10:-1]
+    l = s.split('equal')
+    LHS = print_func(l[0].split())
+    RHS = print_func(l[1].split())
+    if LHS[0]=='(' and LHS[-1]==")":
+        LHS = LHS[1:-1]
+    if RHS[0]=='(' and RHS[-1]==")":
+        RHS = RHS[1:-1]
+    return "%s=%s"%(LHS,RHS)
