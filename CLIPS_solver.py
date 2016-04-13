@@ -71,24 +71,27 @@ class CLIPS_solver:
                 print '\t',
                 print_equation(eq_str)
 
-        if s.find('final_result')==-1:
+        if log.find('final_result')==-1:
             print "FAILED TO SOLVE FOR X"
 
 
     def get_progress_HTML(self,log):
         output = ''
+        final_result_flag = 0
         for s in log.splitlines():
             if s.find('FIRE')!=-1:
                 rule_used = s[s.find('FIRE'):].split()[2]
-                if rule_used!='final_result:':
+                if not rule_used in ['final_result:', 'final_result2:']:
                     output += "<div class='output-step'><div class='output-step-head'>Apply %s </div>"%rule_used
+                else:
+                    final_result_flag = 1
             if s.find('==>')!=-1 and s.find('equation')!=-1:
                 eq_str = s[s.find('equation')-1:]
                 output += "<div class='output-step-eqn'>$$ %s $$</div></div>"%interprete_equation(eq_str)
-
-        if s.find('final_result')==-1:
+        print "\n\n log: \n\n ", log
+        print ":log"
+        if not final_result_flag:
             output += "FAILED TO SOLVE FOR X"
-
         return output
 
     def solve(self,equation_str):
@@ -101,6 +104,7 @@ class CLIPS_solver:
             self.write_clips('(bind ?*next_id* = %s)'%(eqn.nextOperatorId))
             self.write_clips('(load inversion.clp)')
             self.write_clips('(load first_order_solver.clp)')
+            self.write_clips('(load second_order_solver.clp)')
             self.write_clips('(watch rules)')
             self.write_clips('(watch facts)')
             self.write_clips('(reset)')
@@ -114,7 +118,7 @@ class CLIPS_solver:
                     tmp = self.read_clips()
                     if tmp!=None:
                         s += tmp
-                        if s.splitlines()[-1].rstrip()=='CLIPS>':
+                        if 'CLIPS>' in s.splitlines()[-1].rstrip():
                             break
                     sleep(0.1)
                 print s.replace("CLIPS> ","")

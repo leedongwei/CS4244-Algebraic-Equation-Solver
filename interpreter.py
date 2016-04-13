@@ -80,6 +80,7 @@ class ClipsConverter:
         # print 'LHS: ' + LHS_RHS_out[0]
         # print 'RHS: ' + LHS_RHS_out[1]
         self.output = ' equal '.join(LHS_RHS_out)
+        self.output = self.output.replace('\n', ' ').replace('\r', '').replace("    ", "")
 
 
     def parse_token (self, tok):
@@ -171,7 +172,7 @@ def print_func(lq):
         elif x=='sub':
             op = '-'
         elif x=='mult':
-            op = '*'
+            op = '\cdot '
         elif x=='div':
             op = '/'
         else:
@@ -179,13 +180,19 @@ def print_func(lq):
 
         x1 = print_func(operand1)
         x2 = print_func(operand2)
-        if x2=='x' and op=='*' and is_number(x1):
-            return "%sx"%x1
+        if x2=='x' and op=='\cdot ' and is_number(x1):
+            sign = "" if int(x1) >= 0 else "-"
+            return "%sx"%x1 if abs(int(x1)) != 1 else sign+"x"
+        elif x1 == "x" and op=='\cdot ' and x2 == "x":
+            return "x^2"
+        elif x2=='x^2' and op=='\cdot ' and is_number(x1):
+            sign = "" if int(x1) >= 0 else "-"
+            return "%sx^2"%x1 if abs(int(x1)) != 1 else sign+"x^2"
         else:
             return "(%s%s%s)"%(x1,op,x2)
         
     else:
-        return x
+        return ", ".join([x] + lq)
     
 def print_equation(s):
     s = s[10:-1]
