@@ -1,7 +1,94 @@
+body {
+  position: relative;
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  background: url('/static/bg.jpg') no-repeat center center fixed;
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
+
+  margin: 0;
+  padding: 0;
+}
+
+
 .panel {
   display: block;
+  width: 750px;
   height: auto;
-  width: 700px;
   margin: 0 auto;
-  border: 1px solid #000;
+  background-color: rgba(0, 0, 0, 0.7);
+}
+.panel.empty {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin-top: -65px;
+  margin-left: -350px;
+}
+.panel.filled {
+  position: absolute;
+  top: 30px;
+  left: 50%;
+  margin: 30px 0 30px -350px;
+}
+
+.content {
+  position: relative;
+  display: block;
+  height: 100%;
+  width: 100%;
+  z-index: 100;
+  text-align:center;
+}
+
+.input {
+  display: block;
+  width: 100%;
+  height: 130px;
+  margin: 0 auto;
+  text-align: center;
+  z-index: 100;
+}
+.input h1 {
+  color: #fff;
+  font-family: 'Playfair Display', sans-serif;
+  font-size: 2.3em;
+  line-height: 1.2;
+}
+.input input {
+  width: 70%;
+  padding: 10px;
+  margin: 10px;
+  vertical-align: middle;
+}
+
+
+.output {
+  z-index: 100;
+}
+.output-step {
+  display: block;
+  margin: 30px 20px;
+  color: #fff;
+  padding: 15px 30px;
+  background: rgba(0, 0, 0, 0.50);
+}
+
+.output-step-head {
+  font-family: "Libre Baskerville", serif; 
+  font-size: 1.1em;
+}
+
+.output-step-eqn {
+  color: #fff;
+}
+.output-step-eqn:first-child {
+  font-size: 2em;
+}
+
+#clear-eqn {
+  margin: 15px auto;
 }

@@ -2,6 +2,38 @@
 <html>
 <head>
   <title>Equation Solver</title>
+
+  <link href='https://fonts.googleapis.com/css?family=Libre+Baskerville:400italic|Playfair+Display:900' rel='stylesheet' type='text/css'>
+  <link rel="stylesheet" href="static/buttons.css" />
+  <link rel="stylesheet" href="static/styles.css" />
+</head>
+
+<body>
+  <div class="panel empty">
+
+    <div class="content">
+      <div class="input">
+        <h1>Algebraic Equation Solver
+          <span style='
+            font-family: "Libre Baskerville", serif; 
+            font-size: 0.8em;
+            margin: 0 auto;
+            padding: 0;'>
+            with CLIPS
+          </span>
+        </h1>
+        <input type="textbox" id="user-input" placeholder="Key in your equation here: 5x * (2 + 3) = 50 / 2">
+        <button id="submit-equation" href="#" class="button button-flat-primary">Submit equation</button>
+      </div>
+
+      <div id="output">
+      </div>
+
+
+      <a href="#" id="clear-eqn" class="button button-flat-caution" style="display: none;">Clear equation</a>
+    </div>
+  </div>
+
   <script type="text/x-mathjax-config">
     MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}});
   </script>
@@ -10,37 +42,7 @@
   </script>
   <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
   <script src="https://code.jquery.com/jquery-1.12.0.min.js"></script>
-
-  <link rel="stylesheet" href="static/styles.css" />
-</head>
-
-<body>
-  <div class="panel">
-    <input type="textbox" id="user-input" name="Enter equation">
-    <button id="submit-equation">Submit equation</button>
-    <div id="output">
-    </div>
-  </div>
-
-    <script type="text/javascript">
-        $('#submit-equation').on("click", function(e){
-            $.ajax({
-                url: '/submit-equation',
-                data: {
-                    "equation":$("#user-input").val()
-                },
-                type: 'POST',
-                success: function(res){
-                    console.log(res);
-                    $('#output').html(res);
-                    MathJax.Hub.Queue(['Typeset', MathJax.Hub, 'output']);
-                },
-                error: function(error){
-                    console.log(error);
-                }
-            });
-        });
-    </script>
-
+  <script src="static/buttons.js"></script>
+  <script src="static/scripts.js"></script>
 </body>
 </html>
