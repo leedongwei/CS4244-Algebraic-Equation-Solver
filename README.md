@@ -1,16 +1,12 @@
 # CS4244-Algebraic-Equation-Solver
 Expert System module: CLIPS System Shell
 
-1. To run, go to console and type `python CLIPS_Interface.py`
+Two way to start our program:
+1. Modify the equation in run_equation_solver.py 
+This is the script where we test our program
 
-CLIPS Load sequence:
-(clear)
-(load init.clp)
-(load inversion.clp)
-(load association.clp)
-(watch rules)
-(watch facts)
-(reset)
-(run)
-
-init.clp is where we define equation and goal
+2. Use Web User Interface
+- Install Flask: pip install flask
+- Launch HTTP server: python server.py
+- On browser, open http://127.0.0.1:5000/
+- Write the equation into the input box and Submit to see result
