@@ -40,6 +40,14 @@
     )
 )
 
+; x*x = c => x = sqrt(c)
+(defrule take-sqrt-x2
+    ?old-fact <- (equation mult ?id x split ?id x end ?id equal ?rhs_num&:(numberp ?rhs_num))
+    =>
+    (retract ?old-fact)
+    (assert (equation x equal (sqrt ?rhs_num)))
+)
+
 ; Make sure X is always on LHS
 ; F(x) = G(x) --> F(x) - G(x) = 0
 (defrule inversion_rule_3_make_sure_x_on_lhs

@@ -88,8 +88,6 @@ class CLIPS_solver:
             if s.find('==>')!=-1 and s.find('equation')!=-1:
                 eq_str = s[s.find('equation')-1:]
                 output += "<div class='output-step-eqn'>$$ %s $$</div></div>"%interprete_equation(eq_str)
-        print "\n\n log: \n\n ", log
-        print ":log"
         if not final_result_flag:
             output += "FAILED TO SOLVE FOR X"
         return output

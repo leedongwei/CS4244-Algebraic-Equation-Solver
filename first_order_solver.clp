@@ -346,14 +346,10 @@
 )
 
 (defrule Associative_combine_x_3c1
-    ; 3c1 Ax +- (Bx +- C) => (Ax +- Bx) +- c
+    ; 3c1 F(x) +- (Bx +- C) => (Ax +- Bx) +- c
     ?old-fact <- (equation $?first 
         ?operator&:(lexemep ?operator) ?id 
-            mult ?id_mult1
-                ?num_A&:(numberp ?num_A)
-            split ?id_mult1
-                x
-            end ?id_mult1
+            $?F_x
         split ?id 
             ?operator2&:(lexemep ?operator2) ?id2
                 mult ?id_mult2
@@ -376,19 +372,15 @@
     ))
     => 
     (retract ?old-fact)
-    ; 3c Ax + (Bx +- C) => (Ax + Bx) +- C
-    ; 3c Ax - (Bx +- C) => (Ax - Bx) -1*(+-C)
+    ; 3c F(x) + (Bx +- C) => (F(x) + Bx) +- C
+    ; 3c F(x) - (Bx +- C) => (F(x) - Bx) -1*(+-C)
     (switch ?operator
         (case add then 
             (assert 
                 (equation ?first 
                     ?operator2 ?id2 
                         add ?id
-                            mult ?id_mult1
-                                ?num_A
-                            split ?id_mult1
-                                x
-                            end ?id_mult1
+                            ?F_x
                         split ?id
                             mult ?id_mult2
                                 ?num_B
@@ -406,11 +398,7 @@
                 (equation ?first 
                     ?operator2 ?id2 
                         sub ?id
-                            mult ?id_mult1
-                                ?num_A
-                            split ?id_mult1
-                                x
-                            end ?id_mult1
+                            ?F_x
                         split ?id
                             mult ?id_mult2
                                 ?num_B
