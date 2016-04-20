@@ -1,3 +1,32 @@
+; format (Ax)*x --> A(x*x)
+(defrule Commutative-reorder-x
+    ?old-fact <- (equation $?first
+        mult ?id1 
+            mult ?id2 
+                ?A&:(numberp ?A)
+            split ?id2
+                x 
+            end ?id2
+        split ?id1 
+            x 
+        end ?id1
+        $?rest)
+    =>
+    (retract ?old-fact)
+    (assert (equation ?first
+        mult ?id1 
+            ?A 
+        split ?id1 
+            mult ?id2 
+                x 
+            split ?id2 
+                x 
+            end ?id2
+        end ?id1
+        $?rest)
+    )
+)
+
 ; Second Order Solver
 ; num1 [operator] F(x) = rhs_num 
 ; --> F(x) = rhs_num [inverse_operator] num1
