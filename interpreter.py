@@ -46,6 +46,8 @@ def is_number (token):
 class ClipsConverter:
     def __init__(self, inp):
         self.input = inp.replace(' ', '')
+        self.input = self.input.replace("x^2","x*x")
+
         self.operators = operators
         self.operatorStack = []
         self.variableStack = []

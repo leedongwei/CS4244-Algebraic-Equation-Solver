@@ -45,7 +45,12 @@
     ?old-fact <- (equation mult ?id x split ?id x end ?id equal ?rhs_num&:(numberp ?rhs_num))
     =>
     (retract ?old-fact)
-    (assert (equation x equal (sqrt ?rhs_num)))
+    (if (> ?rhs_num 0)
+        then
+            (assert (equation x equal (sqrt ?rhs_num)) )
+        else
+            (assert (equation x equal (sym-cat (sqrt (- 0 ?rhs_num)) *i)) )
+    )
 )
 
 ; Make sure X is always on LHS

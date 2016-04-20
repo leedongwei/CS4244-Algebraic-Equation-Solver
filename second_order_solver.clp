@@ -30,7 +30,7 @@
 ; Second Order Solver
 ; num1 [operator] F(x) = rhs_num 
 ; --> F(x) = rhs_num [inverse_operator] num1
-(defrule solve-quadratic-equation
+(defrule solve-quadratic-equation-1
     ?old-fact <- (equation 
         add ?id5 
             mult ?id4 
@@ -68,7 +68,7 @@
 ; Second Order Solver
 ; num1 [operator] F(x) = rhs_num 
 ; --> F(x) = rhs_num [inverse_operator] num1
-(defrule solve-quadratic-equation2
+(defrule solve-quadratic-equation-2
     ?old-fact <- (equation 
         add ?id1 
             mult ?id2 
@@ -294,7 +294,7 @@
 
 ; S - C => S + -C
 ; get rid of subs
-(defrule solve-quadratic-equation
+(defrule solve-quadratic-equation-3
     ?old-fact <- (equation 
         add ?id1 
             mult ?id2 
